@@ -1,0 +1,53 @@
+@import url('https://fonts.googleapis.com/css?family=Poppins:400,500,600,700&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Poppins', sans-serif;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  width: 100%;
+  background: #f2f2f2; /* Fallback background color */
+  background-image: url('images/weather-app-backgrd.jpg');
+  background-size: cover;
+  background-position: center;
+}
+
+h1 {
+  font-size: 26px;
+  font-weight: 600;
+  color: #fff;
+  text-align: center;
+  margin-top : 20px;
+  margin-bottom: 20px;
+  padding: 10px 20px;
+  background: linear-gradient(-135deg, #c850c0, #4158d0);
+  border-radius: 15px;
+  user-select: none;
+}
+
+#map {
+  height: 500px;
+  width: 100%;
+  margin: 20px auto;
+  border-radius: 15px;
+  box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  h1 {
+    font-size: 28px;
+  }
+
+  #map {
+    height: 300px; /* Adjust map height for smaller screens */
+  }
+}

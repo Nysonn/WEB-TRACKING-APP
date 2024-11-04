@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GPS Tracker</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="https://maps.googleapis.com/maps/api/js?key=<%= apiKey %>"></script>
+</head>
+<body>
+  <h1>Device Location</h1>
+  <div id="map"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    let map, marker;
+
+    // Define day and night themes for the map
+    const dayTheme = [];
+    const nightTheme = [
+      { elementType: "geometry", stylers: [{ color: "#212121" }] },
+      { elementType: "labels.icon", stylers: [{ visibility: "off" }] },
+      { elementType: "labels.text.fill", stylers: [{ color: "#757575" }] },
+      { elementType: "labels.text.stroke", stylers: [{ color: "#212121" }] },
+      { featureType: "administrative", elementType: "geometry", stylers: [{ color: "#757575" }] },
+      { featureType: "administrative.country", elementType: "labels.text.fill", stylers: [{ color: "#9e9e9e" }] },
+      { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#bdbdbd" }] },
+      { featureType: "poi", elementType: "labels.text.fill", stylers: [{ color: "#757575" }] },
+      { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#181818" }] },
+      { featureType: "poi.park", elementType: "labels.text.fill", stylers: [{ color: "#616161" }] },
+      { featureType: "poi.park", elementType: "labels.text.stroke", stylers: [{ color: "#1b1b1b" }] },
+      { featureType: "road", elementType: "geometry.fill", stylers: [{ color: "#2c2c2c" }] },
+      { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#8a8a8a" }] },
+      { featureType: "road.arterial", elementType: "geometry", stylers: [{ color: "#373737" }] },
+      { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#3c3c3c" }] },
+      { featureType: "road.highway.controlled_access", elementType: "geometry", stylers: [{ color: "#4e4e4e" }] },
+      { featureType: "road.local", elementType: "labels.text.fill", stylers: [{ color: "#616161" }] },
+      { featureType: "transit", elementType: "labels.text.fill", stylers: [{ color: "#757575" }] },
+      { featureType: "water", elementType: "geometry", stylers: [{ color: "#000000" }] },
+      { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#3d3d3d" }] }
+    ];
+
+    function initMap() {
+      const currentHour = new Date().getHours();
+      const styles = currentHour >= 18 || currentHour < 6 ? nightTheme : dayTheme;
+
+      map = new google.maps.Map(document.getElementById('map'), {  
+        center: { lat: 0, lng: 0 },
+        zoom: 8,
+        styles: styles
+      });
+
+      // Attempt to set map to user's location as a fallback
+    //   if (navigator.geolocation) {
+    //     navigator.geolocation.getCurrentPosition(
+    //       (position) => {
+    //         const userPosition = {
+    //           lat: position.coords.latitude,
+    //           lng: position.coords.longitude,
+    //         };
+    //         map.setCenter(userPosition);
+    //       },
+    //       () => {
+    //         console.warn("Geolocation failed or not available.");
+    //       }
+    //     );
+    //   }
+    // }
+
+    // Function to update the map with the latest device location
+    if (navigator.geolocation) {
+    navigator.geolocation.watchPosition(position => {
+        const data = {
+            device_id: 'device123',
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+        };
+        sendData(data);
+    }, error => {
+        console.warn("Error getting location: ", error);
+    }, { enableHighAccuracy: true });
+} else {
+    console.warn("Geolocation is not supported by this browser.");
+}
+    }
+
+    function updateMap(latitude, longitude) {
+      // Validate coordinates
+      if (!latitude || !longitude || isNaN(latitude) || isNaN(longitude)) {
+        console.error("Invalid coordinates received.");
+        return;
+      }
+
+      const position = { lat: latitude, lng: longitude };
+      if (marker) {
+        marker.setPosition(position);
+        map.panTo(position);
+      } else {
+        marker = new google.maps.Marker({
+          position,
+          map: map
+        });
+        map.setCenter(position);
+      }
+
+      // Adjust zoom if position is out of bounds
+      const bounds = map.getBounds();
+      if (bounds && !bounds.contains(position)) {
+        map.setZoom(10);
+      }
+    }
+
+    window.onload = initMap;
+
+    const socket = io();
+    socket.on('locationUpdate', (data) => {
+      updateMap(parseFloat(data.latitude), parseFloat(data.longitude));
+    });
+  </script>
+</body>
+</html>

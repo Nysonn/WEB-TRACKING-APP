@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Send GPS Data</title>
+  <link rel="stylesheet" href="/gps.css">
+</head>
+<body>
+  <h1>Data Access</h1>
+  <div class="container">
+    <form id="gpsForm">
+      <div class="input-wrapper">
+        <label for="latitude"></label>
+        <input type="text" id="latitude" name="latitude" placeholder="Enter Latitude">
+      </div>
+      <div class="input-wrapper">
+        <label for="longitude"></label>
+        <input type="text" id="longitude" name="longitude" placeholder="Enter Longitude">
+      </div>
+      <div class="input-wrapper">
+        <label for="ipAddress"></label>
+        <input type="text" id="ipAddress" name="ipAddress" placeholder="Enter IP Address">
+      </div>
+      <button type="button" id="sendGps">Send GPS Data</button>
+      <button type="button" id="sendIpLocation">Send IP Location Data</button>
+    </form>
+    <div id="notification" class="notification"></div>
+  </div>
+
+  <script>
+
+    // INITIAL WORKING CODE 1
+
+    // document.getElementById('sendGps').addEventListener('click', function() {
+    //   const latitude = parseFloat(document.getElementById('latitude').value);
+    //   const longitude = parseFloat(document.getElementById('longitude').value);
+    //   const ipAddress = document.getElementById('ipAddress').value;
+    //   const data = {
+    //     device_id: 'device123',
+    //     latitude: latitude || undefined,
+    //     longitude: longitude || undefined,
+    //     ipAddress: ipAddress || undefined
+    //   };
+
+    //   // Validate GPS coordinates
+    //   if (isNaN(latitude) || isNaN(longitude) || latitude === 0 || longitude === 0) {
+    //     if (navigator.geolocation) {
+    //       navigator.geolocation.getCurrentPosition(function(position) {
+    //         data.latitude = position.coords.latitude;
+    //         data.longitude = position.coords.longitude;
+
+    //         // Validate received GPS coordinates
+    //         if (data.latitude !== 0 && data.longitude !== 0) {
+    //           sendData(data);
+    //         } else {
+    //           showNotification('Invalid GPS coordinates received');
+    //         }
+    //       }, function() {
+    //         showNotification('Geolocation is not supported by your browser');
+    //       });
+    //     } else {
+    //       showNotification('Geolocation is not supported by your browser');
+    //     }
+    //   } else {
+    //     // Check if latitude and longitude are valid
+    //     if (latitude !== 0 && longitude !== 0) {
+    //       sendData(data);
+    //     } else {
+    //       showNotification('Please enter valid GPS coordinates');
+    //     }
+    //   }
+    // });
+
+    // // Event listener for the IP-based location button
+    // document.getElementById('sendIpLocation').addEventListener('click', function() {
+    //   const data = {
+    //     device_id: 'device123'
+    //   };
+
+    //   fetch('/ip-location', {
+    //     method: 'POST',
+    //     headers: { 'Content-Type': 'application/json' },
+    //     body: JSON.stringify(data)
+    //   }).then(response => {
+    //     if (response.ok) {
+    //       showNotification('IP-based location data sent successfully');
+    //     } else {
+    //       showNotification('Failed to send IP-based location data');
+    //     }
+    //   }).catch(error => {
+    //     showNotification('Error: ' + error.message);
+    //   });
+    // });
+
+    // function sendData(data) {
+    //   fetch('/gps', {
+    //     method: 'POST',
+    //     headers: { 'Content-Type': 'application/json' },
+    //     body: JSON.stringify(data)
+    //   }).then(response => {
+    //     if (response.ok) {
+    //       showNotification('Data sent successfully');
+    //     } else {
+    //       showNotification('Failed to send data');
+    //     }
+    //   }).catch(error => {
+    //     showNotification('Error: ' + error.message);
+    //   });
+    // }
+
+    // function showNotification(message) {
+    //   const notification = document.getElementById('notification');
+    //   notification.innerText = message;
+    //   notification.classList.remove('hide');
+    //   notification.classList.add('show');
+
+    //   setTimeout(() => {
+    //     notification.classList.remove('show');
+    //     notification.classList.add('hide');
+    //     setTimeout(() => {
+    //       notification.style.display = 'none';
+    //     }, 500);
+    //   }, 3000);
+    // }
+
+
+    // WORKING CODE 2
+  // document.getElementById('sendGps').addEventListener('click', function () {
+  //   const data = { device_id: 'device123' };
+
+  //   // Continuously watch and send GPS data
+  //   if (navigator.geolocation) {
+  //     navigator.geolocation.watchPosition(
+  //       function (position) {
+  //         data.latitude = position.coords.latitude;
+  //         data.longitude = position.coords.longitude;
+
+  //         sendData(data); // Continuously send updated data
+  //       },
+  //       function (error) {
+  //         console.error('Geolocation error:', error.message);
+  //         showNotification('Unable to retrieve location data.');
+  //       },
+  //       {
+  //         enableHighAccuracy: true,
+  //         timeout: 5000,
+  //         maximumAge: 0
+  //       }
+  //     );
+  //   } else {
+  //     showNotification('Geolocation is not supported by your browser');
+  //   }
+  // });
+
+  // function sendData(data) {
+  //   fetch('/gps', {
+  //     method: 'POST',
+  //     headers: { 'Content-Type': 'application/json' },
+  //     body: JSON.stringify(data)
+  //   })
+  //     .then(response => {
+  //       if (response.ok) {
+  //         showNotification('Data sent successfully');
+  //       } else {
+  //         showNotification('Failed to send data');
+  //       }
+  //     })
+  //     .catch(error => {
+  //       showNotification('Error: ' + error.message);
+  //     });
+  // }
+
+  // function showNotification(message) {
+  //   const notification = document.getElementById('notification');
+  //   notification.innerText = message;
+  //   notification.classList.remove('hide');
+  //   notification.classList.add('show');
+  //   setTimeout(() => {
+  //     notification.classList.remove('show');
+  //     notification.classList.add('hide');
+  //   }, 3000);
+  // }
+
+
+  //NEW CODE
+
+  // Generate a unique ID for each device session
+  const deviceId = 'device-' + Math.random().toString(36).substring(2, 9);
+
+  document.getElementById('sendGps').addEventListener('click', function () {
+    if (navigator.geolocation) {
+      navigator.geolocation.watchPosition(
+        function (position) {
+          const data = {
+            device_id: deviceId,
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          };
+          sendData(data); // Continuously send updated data
+        },
+        function (error) {
+          console.error('Geolocation error:', error.message);
+          showNotification('Unable to retrieve location data.');
+        },
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+      );
+    } else {
+      showNotification('Geolocation is not supported by your browser');
+    }
+  });
+
+  function sendData(data) {
+    fetch('/gps', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    })
+      .then(response => {
+        if (response.ok) {
+          showNotification('Data sent successfully');
+        } else {
+          showNotification('Failed to send data');
+        }
+      })
+      .catch(error => {
+        showNotification('Error: ' + error.message);
+      });
+  }
+
+  function showNotification(message) {
+    const notification = document.getElementById('notification');
+    notification.innerText = message;
+    notification.classList.remove('hide');
+    notification.classList.add('show');
+    setTimeout(() => {
+      notification.classList.remove('show');
+      notification.classList.add('hide');
+    }, 3000);
+  }
+
+  </script>
+</body>
+</html>
