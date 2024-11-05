@@ -9,7 +9,7 @@ import cors from 'cors';
 dotenv.config();
 
 const { Pool } = pkg; 
-// const LOCAL_IP = '10.159.101.152';
+// const LOCAL_IP = '192.168.137.70';
 
 // Create a PostgreSQL connection pool
 const pool = new Pool({
