@@ -4,10 +4,12 @@ import { Server } from 'socket.io';
 import pkg from 'pg';
 import axios from 'axios';
 import dotenv from 'dotenv';
+import cors from 'cors';
 
 dotenv.config();
 
 const { Pool } = pkg; 
+// const LOCAL_IP = '10.159.101.152';
 
 // Create a PostgreSQL connection pool
 const pool = new Pool({
@@ -24,11 +26,13 @@ pool.connect((err) => {
 });
 
 const app = express();
-// const host =' 192.168.137.1';
-
 app.set('view engine', 'ejs');
 app.use(express.static('public'));
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(cors({ origin: 'http://localhost:3001' }));
+
+// app.use(cors({ origin: `http://${LOCAL_IP}:3001` }));
+
 app.use(bodyParser.json());
 
 // Google Maps API key from environment variable
@@ -55,9 +59,29 @@ app.post('/gps', async (req, res) => {
   }
 });
 
-// GPS page route
-app.get('/gps', (req, res) => {
-  res.render('gps', { apiKey: GOOGLE_MAPS_API_KEY });
+//POST ROUTE FOR RECEIVING GPS DATA FROM OTHER DEVICES
+app.post('/receive-gps-data', (req, res) => {
+  const { latitude, longitude, device_id } = req.body;
+  
+  if (latitude && longitude && device_id) {
+    // Process GPS data or save it to the database
+    console.log('Received GPS data:', { latitude, longitude, device_id });
+    res.status(200).json({ message: 'GPS data received successfully' });
+  } else {
+    res.status(400).json({ message: 'Invalid data received' });
+  }
+});
+
+
+// Route to fetch recent location data (for the map)
+app.get('/api/locations', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM locations ORDER BY timestamp DESC LIMIT 10');
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching location data:', err);
+    res.sendStatus(500);
+  }
 });
 
 // IPinfo API key from environment variable
@@ -65,12 +89,11 @@ const YOUR_IPINFO_API_KEY = process.env.YOUR_IPINFO_API_KEY;
 
 // POST ROUTE FOR RECEIVING IP ADDRESS
 app.post('/ip-location', async (req, res) => {
-  const { device_id } = req.body; // Assume IP will be used for location
+  const { device_id } = req.body;
 
   try {
-    // Fetch location data from ipinfo
     const response = await axios.get(`https://ipinfo.io?token=${YOUR_IPINFO_API_KEY}`);
-    const [latitude, longitude] = response.data.loc.split(','); // loc is usually in 'latitude,longitude' format
+    const [latitude, longitude] = response.data.loc.split(',');
 
     const query = `INSERT INTO locations (device_id, latitude, longitude) VALUES ($1, $2, $3)`;
     await pool.query(query, [device_id, latitude, longitude]);
@@ -91,37 +114,22 @@ const server = app.listen(3000, () => {
 const io = new Server(server);
 
 // Real-time GPS location updates
-// setInterval(async () => {
-//   try {
-//     // Fetch the latest location data from the database
-//     const result = await pool.query('SELECT * FROM locations ORDER BY timestamp DESC LIMIT 1');
-    
-//     // Emit the most recent location to the clients
-//     if (result.rows.length > 0) {
-//       io.emit('locationUpdate', result.rows[0]);
-//     }
-//   } catch (err) {
-//     console.error('Error fetching GPS data:', err);
-//   }
-// }, 3000);
-
 io.on('connection', (socket) => {
   console.log('A client connected.');
 
-  // Update all clients with the latest GPS data every time it changes
+  // Periodically fetch and emit the latest location data to connected clients
+  setInterval(async () => {
+    try {
+      const result = await pool.query('SELECT * FROM locations ORDER BY timestamp DESC LIMIT 1');
+      if (result.rows.length > 0) {
+        io.emit('locationUpdate', result.rows[0]);
+      }
+    } catch (err) {
+      console.error('Error fetching GPS data:', err);
+    }
+  }, 3000);
+
   socket.on('disconnect', () => {
     console.log('A client disconnected.');
   });
 });
-
-setInterval(async () => {
-  try {
-    const result = await pool.query('SELECT * FROM locations ORDER BY timestamp DESC LIMIT 1');
-    if (result.rows.length > 0) {
-      io.emit('locationUpdate', result.rows[0]);
-    }
-  } catch (err) {
-    console.error('Error fetching GPS data:', err);
-  }
-}, 3000);
-
